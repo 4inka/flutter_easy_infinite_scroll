@@ -7,11 +7,15 @@ import 'package:flutter/material.dart';
 class EasyInfiniteScroll extends StatefulWidget {
   final Future<List<Widget>> fetchData;
   final bool hasMoreData;
+  final Widget? loaderWidget;
+  final Widget? noMoreItemsWidget;
 
   EasyInfiniteScroll({
     required this.fetchData,
-    required this.hasMoreData
-  });
+    required this.hasMoreData,
+    this.loaderWidget,
+    this.noMoreItemsWidget,
+  });// : assert(noMoreItemsText.is);
 
   @override
   _EasyInfiniteScrollState createState() => _EasyInfiniteScrollState();
@@ -37,9 +41,12 @@ class _EasyInfiniteScrollState extends State<EasyInfiniteScroll> {
     });
   }
 
-  Widget _buildLoader() {
-    Widget _loader;
-    if (Platform.isIOS) {
+  Widget? _buildLoaderWidget() {
+    Widget? _loader;
+    if(widget.loaderWidget != null) {
+      _loader = widget.loaderWidget;
+    }
+    else if (Platform.isIOS) {
       _loader = CupertinoActivityIndicator();
     }
     else {
@@ -48,14 +55,33 @@ class _EasyInfiniteScrollState extends State<EasyInfiniteScroll> {
 
     return Container(
       alignment: Alignment.center,
-      padding: EdgeInsets.symmetric(vertical: 5),
+      padding: EdgeInsets.symmetric(vertical: 10),
       child: _loader,
+    );
+  }
+
+  Widget? _buildNoMoreItemsWidget() {
+    if(widget.loaderWidget != null) {
+      return widget.loaderWidget;
+    }
+
+    return Container(
+      alignment: Alignment.center,
+      padding: EdgeInsets.symmetric(vertical: 5),
+      child: Text(
+        'No more items',
+        style: TextStyle(
+          color: Colors.grey,
+          fontSize: 16,
+          fontWeight: FontWeight.bold
+        )
+      )
     );
   }
 
   Future<void> _fetchData() async {
     if (_isFirstLoad) {
-      setState(() =>_items.add( _buildLoader() ));
+      setState(() =>_items.add( _buildLoaderWidget()) );
     }
 
     await widget.fetchData.then((value) {
@@ -63,16 +89,10 @@ class _EasyInfiniteScrollState extends State<EasyInfiniteScroll> {
         _items.removeLast();
         _items.addAll(value);
         if (widget.hasMoreData) {
-          print('Not done yet');
-          setState(() =>_items.add( _buildLoader() ));
+          setState(() =>_items.add( _buildLoaderWidget()) );
         }
         else {
-          print('Done');
-          setState(() =>_items.add(
-            Center(
-              child: Text('Loaded last item')
-            )
-          ));
+          setState(() =>_items.add(_buildNoMoreItemsWidget()) );
         }
       });
     });
@@ -81,6 +101,8 @@ class _EasyInfiniteScrollState extends State<EasyInfiniteScroll> {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
+      primary: false,
+      shrinkWrap: true,
       controller: _scrollController,
       itemCount: _items.length,
       itemBuilder: (_, i) {
