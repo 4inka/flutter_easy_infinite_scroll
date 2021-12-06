@@ -4,59 +4,61 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class EasyInfiniteScroll extends StatefulWidget {
-  final Future<List<Widget>> fetchData;
+class EasyInfiniteScroll<T> extends StatefulWidget {
+  final Future<List<T>> onFetch;
+  final Future<List<T>> onRefresh;
   final bool hasMoreData;
+  final Widget Function(dynamic data) widgetBuilder;
   final Widget? loaderWidget;
   final Widget? noMoreItemsWidget;
 
   EasyInfiniteScroll({
-    required this.fetchData,
+    Key? key,
     required this.hasMoreData,
+    required this.onFetch,
+    required this.onRefresh,
+    required this.widgetBuilder,
     this.loaderWidget,
     this.noMoreItemsWidget,
-  });// : assert(noMoreItemsText.is);
+  }) : super(key: key);// : assert(noMoreItemsText.is);
 
   @override
-  _EasyInfiniteScrollState createState() => _EasyInfiniteScrollState();
+  _EasyInfiniteScrollState createState() => _EasyInfiniteScrollState<T>();
 }
 
-class _EasyInfiniteScrollState extends State<EasyInfiniteScroll> {
-  late ScrollController _scrollController;
-  final List _items = [];
-  bool _isFirstLoad = true;
+class _EasyInfiniteScrollState<T> extends State<EasyInfiniteScroll> {
+  final ScrollController _scrollController = ScrollController();
+  final List<T> _items = [];
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    Future.delayed(Duration.zero, () async {
-      await _fetchData();
-      setState(() => _isFirstLoad = false );
-    });
-    _scrollController = ScrollController();
+    Future.delayed(Duration.zero, () async => await _onFetch() );
     _scrollController.addListener(() async {
-      if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
-        await _fetchData();
+      if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent && widget.hasMoreData) {
+        await _onFetch();
       }
     });
   }
 
-  Widget? _buildLoaderWidget() {
-    Widget? _loader;
+  Widget? _setLoaderWidget() {
     if(widget.loaderWidget != null) {
-      _loader = widget.loaderWidget;
+      return widget.loaderWidget;
     }
     else if (Platform.isIOS) {
-      _loader = CupertinoActivityIndicator();
+      return CupertinoActivityIndicator();
     }
     else {
-      _loader = CircularProgressIndicator();
+      return CircularProgressIndicator();
     }
+  }
 
+  Widget? _buildLoaderWidget() {
     return Container(
       alignment: Alignment.center,
       padding: EdgeInsets.symmetric(vertical: 10),
-      child: _loader,
+      child: _setLoaderWidget()
     );
   }
 
@@ -79,34 +81,80 @@ class _EasyInfiniteScrollState extends State<EasyInfiniteScroll> {
     );
   }
 
-  Future<void> _fetchData() async {
-    if (_isFirstLoad) {
-      setState(() =>_items.add( _buildLoaderWidget()) );
-    }
+  Future<void> _onFetch() async {
+    if (!widget.hasMoreData) return;
 
-    await widget.fetchData.then((value) {
+    setState(() => _isLoading = true);
+    await widget.onFetch.then((value) {
       setState(() {
-        _items.removeLast();
-        _items.addAll(value);
-        if (widget.hasMoreData) {
-          setState(() =>_items.add( _buildLoaderWidget()) );
-        }
-        else {
-          setState(() =>_items.add(_buildNoMoreItemsWidget()) );
-        }
+        _items.addAll(value as List<T>);
+        _isLoading = false;
       });
+    }).catchError((error) {
+      setState(() => _isLoading = false );
+      throw(error);
+    });
+  }
+
+  Future<void> _refresh() async {
+    setState(() => _isLoading = true);
+    await widget.onFetch.then((value) {
+      setState(() {
+        _items.clear();
+        _items.addAll(value as List<T>);
+        _isLoading = false;
+      });
+    }).catchError((error) {
+      setState(() {
+        _isLoading = false;
+      });
+      throw(error);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      primary: false,
-      shrinkWrap: true,
-      controller: _scrollController,
-      itemCount: _items.length,
-      itemBuilder: (_, i) {
-        return _items[i];
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return CustomScrollView(
+          primary: false,
+          shrinkWrap: true,
+          controller: _scrollController,
+          physics: BouncingScrollPhysics(),
+          slivers: [
+            CupertinoSliverRefreshControl(
+              onRefresh: _refresh,
+              builder: (context, refreshState, pulledExtent, refreshTriggerPullDistance, refreshIndicatorExtent) {
+                return _buildLoaderWidget()!;
+              }
+            ),
+            SliverToBoxAdapter(
+              child: ListView.builder(
+                primary: false,
+                shrinkWrap: true,
+                itemCount: _items.length + 1,
+                itemBuilder: (ctx, i) {
+                  if (i < _items.length) {
+                    return widget.widgetBuilder(_items[i]);
+                  }
+                  else if(_isLoading || widget.hasMoreData) {
+                    return _buildLoaderWidget()!;
+                  }
+                  else if (_items.isEmpty && !widget.hasMoreData) {
+                    return Container(
+                      width: constraints.maxWidth,
+                      height: constraints.maxHeight,
+                      alignment: Alignment.center,
+                      child: Text('Empty list')
+                    );
+                  }
+
+                  return _buildNoMoreItemsWidget()!;
+                }
+              )
+            )
+          ]
+        );
       }
     );
   }
