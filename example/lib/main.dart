@@ -18,31 +18,29 @@ class _MyHomePageState extends State<MyHomePage> {
 
     if (_pageCount <= 3) {
       await Future.delayed(Duration(seconds: 3)).then((value) {
-          _colors = List.generate(15, (index) {
-            return Colors.pink;
-          });
-        setState(() {
-          _pageCount++;
+        _colors = List.generate(15, (index) {
+          return Colors.pink;
         });
-        print('Page: $_pageCount');
+        setState(() => _pageCount++ );
       });
-    }
-    else {
-      print('No more data');
     }
 
     return _colors;
   }
 
   Future<List<Color>> _refreshData() async {
-    print('ddjdhdssj sssh');
-    await Future.delayed(Duration(seconds: 4));
-    setState(() {
-      _pageCount = 1;
+    List<Color> _colors = [];
+
+    await Future.delayed(Duration(seconds: 3)).then((value) {
+      _colors = List.generate(15, (index) {
+        return Colors.pink;
+      });
+      // We loaded the first part of data and want to load the second part on next fetch
+      // If we set this to 1, it will fetch the first piece of data twice
+      setState(() => _pageCount = 2 );
     });
-    return List.generate(15, (index) {
-      return Colors.pink;
-    });
+
+    return _colors;
   }
 
   @override
@@ -58,14 +56,17 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         body: EasyInfiniteScroll<Color>(
           hasMoreData: _pageCount <= 3,
-          onFetch: _fetchData(),
-          onRefresh: _refreshData(),
+          onFetch: () async => _fetchData(),
+          onRefresh: () async => _refreshData(),
           widgetBuilder: (data) {
             return Container(
               width: double.infinity,
               height: 50,
               margin: EdgeInsets.all(5),
-              color: data
+              decoration: BoxDecoration(
+                color: data,
+                borderRadius: BorderRadius.circular(5)
+              )
             );
           },
         )
