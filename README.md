@@ -1,39 +1,79 @@
-<!-- 
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# Easy Autocomplete
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/guides/libraries/writing-package-pages). 
+<a href="https://www.buymeacoffee.com/4inka" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-violet.png" alt="Buy Me A Pizza" style="height: 60px !important; width: 217px !important;" ></a>
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-library-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/developing-packages). 
--->
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+A Flutter plugin to handle input autocomplete suggestions
 
-## Features
+## Preview
+![Preview](https://raw.githubusercontent.com/4inka/flutter_easy_autocomplete/main/preview/preview.gif)
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
-
-## Getting started
-
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+## ToDo
+* Add validation functionality
+* Adding asynchronous suggestions fetch
+* Add possibility to show empty message when no suggestion is found
 
 ## Usage
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder. 
+In the `pubspec.yaml` of your flutter project, add the following dependency:
 
-```dart
-const like = 'sample';
+``` yaml
+dependencies:
+  ...
+  easy_autocomplete: ^1.0.0
 ```
 
-## Additional information
+You can create a simple autocomplete input widget with the following example:
 
-TODO: Tell users more about the package: where to find more information, how to 
-contribute to the package, how to file issues, what response they can expect 
-from the package authors, and more.
+``` dart
+import 'package:easy_autocomplete/easy_autocomplete.dart';
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Example',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: SafeArea(
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text('Example')
+          ),
+          body: Container(
+            padding: EdgeInsets.all(10),
+            alignment: Alignment.center,
+            child: EasyAutocomplete(
+              suggestions: ['Afeganistan', 'Albania', 'Algeria', 'Australia', 'Brazil', 'German', 'Madagascar', 'Mozambique', 'Portugal', 'Zambia'],
+              onChanged: (value) => print(value)
+            )
+          )
+        )
+      )
+    );
+  }
+}
+```
+
+## API
+| Attribute | Type | Required | Description | Default value |
+|:---|:---|:---:|:---|:---|
+| suggestions | `List<String>` | :heavy_check_mark: | The list of suggestions to be displayed |  |
+| controller | `TextEditingController` | :x: | Text editing controller |  |
+| decoration | `InputDecoration` | :x: | Can be used to decorate the input | InputDecoration() |
+| onChanged | `Function(String)` | :x: | Function that handles the changes to the input |  |
+| inputFormatter | `List<TextInputFormatter>` | :x: | Can be used to set custom inputFormatters to field |  |
+| initialValue | `String` | :x: | Can be used to set the textfield initial value |  |
+| textCapitalization | `TextCapitalization` | :x: | Can be used to set the text capitalization type | TextCapitalization.sentences |
+| autofocus | `bool` | :x: | Determines if should gain focus on screen open | false |
+
+## Issues & Suggestions
+If you encounter any issue you or want to leave a suggestion you can do it by filling an [issue](https://github.com/4inka/flutter_easy_autocomplete/issues).
+
+### Thank you for the support!
