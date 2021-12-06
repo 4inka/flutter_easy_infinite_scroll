@@ -15,20 +15,25 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _hasMoreData = true;
 
   Future<List<Color>> _fetchData() async {
-    print(_pageCount);
-    if (_pageCount <= 0) {
-      await Future.delayed(Duration(seconds: 3));
-      setState(() => _pageCount++);
-      print('Page: $_pageCount');
-      return List.generate(15, (index) {
-        return Colors.pink;
+    List<Color> _colors = [];
+
+    if (_pageCount <= 3) {
+      await Future.delayed(Duration(seconds: 3)).then((value) {
+        setState(() {
+          _pageCount++;
+          _colors = List.generate(15, (index) {
+            return Colors.pink;
+          });
+        });
+        print('Page: $_pageCount');
       });
     }
+    else {
+      print('No more data');
+      setState(() => _hasMoreData = false);
+    }
 
-    print('No more data');
-    setState(() => _hasMoreData = false);
-
-    return [];
+    return _colors;
   }
 
   Future<List<Color>> _refreshData() async {
