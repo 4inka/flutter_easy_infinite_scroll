@@ -5,8 +5,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class EasyInfiniteScroll<T> extends StatefulWidget {
-  final Future<List<T>> onFetch;
-  final Future<List<T>> onRefresh;
+  final Future<List<T>> Function() onFetch;
+  final Future<List<T>> Function() onRefresh;
   final bool hasMoreData;
   final Widget Function(dynamic data) widgetBuilder;
   final Widget? loaderWidget;
@@ -83,9 +83,9 @@ class _EasyInfiniteScrollState<T> extends State<EasyInfiniteScroll> {
 
   Future<void> _onFetch({ bool isRefresh = false }) async {
     if (!widget.hasMoreData) return;
-    else if (isRefresh) {
+    else if (isRefresh) {print('Is refrweshin');
       _isLoading = true;
-      await widget.onFetch.then((value) {
+      await widget.onRefresh().then((value) {
         _items.clear();
         _items.addAll(value as List<T>);
         _isLoading = false;
@@ -96,7 +96,7 @@ class _EasyInfiniteScrollState<T> extends State<EasyInfiniteScroll> {
     }
     else {
       _isLoading = true;
-      await widget.onFetch.then((value) {
+      await widget.onFetch().then((value) {
         _items.addAll(value as List<T>);
         _isLoading = false;
       }).catchError((error) {
@@ -113,13 +113,12 @@ class _EasyInfiniteScrollState<T> extends State<EasyInfiniteScroll> {
         return CustomScrollView(
           primary: false,
           shrinkWrap: true,
-          //controller: _scrollController,
+          controller: _scrollController,
           physics: BouncingScrollPhysics(),
           slivers: [
             CupertinoSliverRefreshControl(
-              onRefresh: () async => _onFetch(isRefresh: true),
+              onRefresh: () => _onFetch(isRefresh: true),
               builder: (context, refreshState, pulledExtent, refreshTriggerPullDistance, refreshIndicatorExtent) {
-                print('Noo');
                 return _buildLoaderWidget()!;
               }
             ),
