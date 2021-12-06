@@ -14,23 +14,32 @@ class _MyHomePageState extends State<MyHomePage> {
   int _pageCount = 1;
   bool _hasMoreData = true;
 
-  Future<List<Widget>> _fetchData() async {
-    if (_pageCount <= 3) {
+  Future<List<Color>> _fetchData() async {
+    print(_pageCount);
+    if (_pageCount <= 0) {
       await Future.delayed(Duration(seconds: 3));
       setState(() => _pageCount++);
-      if(_pageCount == 3)
-        setState(() => _hasMoreData = false);
+      print('Page: $_pageCount');
       return List.generate(15, (index) {
-        return Container(
-          width: double.infinity,
-          height: 50,
-          margin: EdgeInsets.all(5),
-          color: Colors.pink
-        );
+        return Colors.pink;
       });
     }
 
+    print('No more data');
+    setState(() => _hasMoreData = false);
+
     return [];
+  }
+
+  Future<List<Color>> _refreshData() async {
+    await Future.delayed(Duration(seconds: 3));
+    setState(() {
+      _pageCount = 1;
+      _hasMoreData = true;
+    });
+    return List.generate(15, (index) {
+      return Colors.pink;
+    });
   }
 
   @override
@@ -44,9 +53,18 @@ class _MyHomePageState extends State<MyHomePage> {
         appBar: AppBar(
           title: Text('Example'),
         ),
-        body: EasyInfiniteScroll(
-          fetchData: _fetchData(),
-          hasMoreData: _hasMoreData
+        body: EasyInfiniteScroll<Color>(
+          hasMoreData: _hasMoreData,
+          onFetch: _fetchData(),
+          onRefresh: _refreshData(),
+          widgetBuilder: (data) {
+            return Container(
+              width: double.infinity,
+              height: 50,
+              margin: EdgeInsets.all(5),
+              color: data
+            );
+          },
         )
       ),
     );
