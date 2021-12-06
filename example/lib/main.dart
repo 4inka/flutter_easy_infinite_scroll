@@ -12,35 +12,33 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _pageCount = 1;
-  bool _hasMoreData = true;
 
   Future<List<Color>> _fetchData() async {
     List<Color> _colors = [];
 
     if (_pageCount <= 3) {
       await Future.delayed(Duration(seconds: 3)).then((value) {
-        setState(() {
-          _pageCount++;
           _colors = List.generate(15, (index) {
             return Colors.pink;
           });
+        setState(() {
+          _pageCount++;
         });
         print('Page: $_pageCount');
       });
     }
     else {
       print('No more data');
-      setState(() => _hasMoreData = false);
     }
 
     return _colors;
   }
 
   Future<List<Color>> _refreshData() async {
-    await Future.delayed(Duration(seconds: 3));
+    print('ddjdhdssj sssh');
+    await Future.delayed(Duration(seconds: 4));
     setState(() {
       _pageCount = 1;
-      _hasMoreData = true;
     });
     return List.generate(15, (index) {
       return Colors.pink;
@@ -59,7 +57,7 @@ class _MyHomePageState extends State<MyHomePage> {
           title: Text('Example'),
         ),
         body: EasyInfiniteScroll<Color>(
-          hasMoreData: _hasMoreData,
+          hasMoreData: _pageCount <= 3,
           onFetch: _fetchData(),
           onRefresh: _refreshData(),
           widgetBuilder: (data) {
