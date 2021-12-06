@@ -81,35 +81,29 @@ class _EasyInfiniteScrollState<T> extends State<EasyInfiniteScroll> {
     );
   }
 
-  Future<void> _onFetch() async {
+  Future<void> _onFetch({ bool isRefresh = false }) async {
     if (!widget.hasMoreData) return;
-
-    setState(() => _isLoading = true);
-    await widget.onFetch.then((value) {
-      setState(() {
-        _items.addAll(value as List<T>);
-        _isLoading = false;
-      });
-    }).catchError((error) {
-      setState(() => _isLoading = false );
-      throw(error);
-    });
-  }
-
-  Future<void> _refresh() async {
-    setState(() => _isLoading = true);
-    await widget.onFetch.then((value) {
-      setState(() {
+    else if (isRefresh) {
+      _isLoading = true;
+      await widget.onFetch.then((value) {
         _items.clear();
         _items.addAll(value as List<T>);
         _isLoading = false;
-      });
-    }).catchError((error) {
-      setState(() {
+      }).catchError((error) {
         _isLoading = false;
+        throw(error);
       });
-      throw(error);
-    });
+    }
+    else {
+      _isLoading = true;
+      await widget.onFetch.then((value) {
+        _items.addAll(value as List<T>);
+        _isLoading = false;
+      }).catchError((error) {
+        _isLoading = false;
+        throw(error);
+      });
+    }
   }
 
   @override
@@ -119,12 +113,13 @@ class _EasyInfiniteScrollState<T> extends State<EasyInfiniteScroll> {
         return CustomScrollView(
           primary: false,
           shrinkWrap: true,
-          controller: _scrollController,
+          //controller: _scrollController,
           physics: BouncingScrollPhysics(),
           slivers: [
             CupertinoSliverRefreshControl(
-              onRefresh: _refresh,
+              onRefresh: () async => _onFetch(isRefresh: true),
               builder: (context, refreshState, pulledExtent, refreshTriggerPullDistance, refreshIndicatorExtent) {
+                print('Noo');
                 return _buildLoaderWidget()!;
               }
             ),
@@ -157,5 +152,10 @@ class _EasyInfiniteScrollState<T> extends State<EasyInfiniteScroll> {
         );
       }
     );
+  }
+
+  dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 }
