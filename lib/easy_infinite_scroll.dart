@@ -32,16 +32,26 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class EasyInfiniteScroll<T> extends StatefulWidget {
+  /// A Future method that returns a List with the selected data type on fetch
   final Future<List<T>> Function() onFetch;
+  /// A Future method that returns a List with the selected data type on refresh
   final Future<List<T>> Function() onRefresh;
+  /// A bool to determine if the lists has more data to be loaded
   final bool hasMoreData;
+  /// A function that that receives values for the current data index and returns a widget that can be filled using the param data
   final Widget Function(dynamic data) widgetBuilder;
+  /// A function that can be used to create a widget to display a custom loader
   final Widget? Function()? loaderBuilder;
+  /// A function that can be used to create a widget to display a custom `No more items` widget
   final Widget? Function()? noMoreItemsBuilder;
+  /// A function that can be used to create a widget to display a custom `No items` widget
   final Widget? Function()? noItemsBuilder;
+  /// A `String` param that can be changed to display a different message when there are no more items to load
   final String noMoreItemsText;
+  /// A `String` param that can be changed to display a different message when there are no items to load
   final String noItemsText;
 
+  /// Creates an infinite scroll list
   const EasyInfiniteScroll({
     Key? key,
     required this.hasMoreData,
