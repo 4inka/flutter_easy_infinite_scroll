@@ -105,7 +105,7 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 ```
 <br/>
-In the example above we created a list that has a type of *Color*, but you can use any other model or datatype you prefer.
+In the example above we created a list that has a type of Color, but you can use any other model or datatype you prefer.
 <br/>
 
 ## API
