@@ -2,10 +2,12 @@ import 'package:easy_infinite_scroll/easy_infinite_scroll.dart';
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(MyHomePage());
+  runApp(const MyHomePage());
 }
 
 class MyHomePage extends StatefulWidget {
+  const MyHomePage({Key? key}) : super(key: key);
+
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
@@ -17,7 +19,7 @@ class _MyHomePageState extends State<MyHomePage> {
     List<Color> _colors = [];
 
     if (_pageCount <= 3) {
-      await Future.delayed(Duration(seconds: 3)).then((value) {
+      await Future.delayed(const Duration(milliseconds: 1500)).then((value) {
         _colors = List.generate(15, (index) {
           return Colors.pink;
         });
@@ -31,7 +33,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<List<Color>> _refreshData() async {
     List<Color> _colors = [];
 
-    await Future.delayed(Duration(seconds: 3)).then((value) {
+    await Future.delayed(const Duration(milliseconds: 1500)).then((value) {
       _colors = List.generate(15, (index) {
         return Colors.pink;
       });
@@ -52,7 +54,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       home: Scaffold(
         appBar: AppBar(
-          title: Text('Example'),
+          title: const Text('Example'),
         ),
         body: EasyInfiniteScroll<Color>(
           hasMoreData: _pageCount <= 3,
@@ -62,15 +64,15 @@ class _MyHomePageState extends State<MyHomePage> {
             return Container(
               width: double.infinity,
               height: 50,
-              margin: EdgeInsets.all(5),
+              margin: const EdgeInsets.all(5),
               decoration: BoxDecoration(
                 color: data,
                 borderRadius: BorderRadius.circular(5)
               )
             );
-          },
+          }
         )
-      ),
+      )
     );
   }
 }
