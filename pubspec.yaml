@@ -1,5 +1,5 @@
 name: easy_infinite_scroll
-description: A new Flutter package project.
+description: A simple, but flexible and powerful implementation of an infinite scroll list in Flutter
 version: 1.0.0
 homepage: https://github.com/4inka/flutter_easy_infinite_scroll
 
