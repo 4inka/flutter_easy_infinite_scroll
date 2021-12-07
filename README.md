@@ -1,17 +1,16 @@
-# Easy Autocomplete
+# Easy Infinite Scroll
 
 <a href="https://www.buymeacoffee.com/4inka" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-violet.png" alt="Buy Me A Pizza" style="height: 60px !important; width: 217px !important;" ></a>
 
 
-A Flutter plugin to handle input autocomplete suggestions
+A simple, but flexible and powerful Flutter plugin to handle infinite scroll lists
 
 ## Preview
-![Preview](https://raw.githubusercontent.com/4inka/flutter_easy_autocomplete/main/preview/preview.gif)
+![Preview](https://raw.githubusercontent.com/4inka/flutter_easy_infinite_scroll/main/preview/preview.gif)
 
 ## ToDo
-* Add validation functionality
-* Adding asynchronous suggestions fetch
-* Add possibility to show empty message when no suggestion is found
+* Add retry widget on error 
+* Add refresh on empty list
 
 ## Usage
 
@@ -20,40 +19,85 @@ In the `pubspec.yaml` of your flutter project, add the following dependency:
 ``` yaml
 dependencies:
   ...
-  easy_autocomplete: ^1.0.0
+  easy_infinite_scroll: ^1.0.0
 ```
 
 You can create a simple autocomplete input widget with the following example:
 
 ``` dart
-import 'package:easy_autocomplete/easy_autocomplete.dart';
+import 'package:easy_infinite_scroll/easy_infinite_scroll.dart';
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyHomePage());
 }
 
-class MyApp extends StatelessWidget {
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({Key? key}) : super(key: key);
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  int _pageCount = 1;
+
+  Future<List<Color>> _fetchData() async {
+    List<Color> _colors = [];
+
+    if (_pageCount <= 3) {
+      await Future.delayed(const Duration(milliseconds: 1500)).then((value) {
+        _colors = List.generate(15, (index) {
+          return Colors.pink;
+        });
+        setState(() => _pageCount++ );
+      });
+    }
+
+    return _colors;
+  }
+
+  Future<List<Color>> _refreshData() async {
+    List<Color> _colors = [];
+
+    await Future.delayed(const Duration(milliseconds: 1500)).then((value) {
+      _colors = List.generate(15, (index) {
+        return Colors.pink;
+      });
+      // We loaded the first part of data and want to load the second part on next fetch
+      // If we set this to 1, it will fetch the first piece of data twice
+      setState(() => _pageCount = 2 );
+    });
+
+    return _colors;
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Example',
+      title: 'Flutter Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: SafeArea(
-        child: Scaffold(
-          appBar: AppBar(
-            title: Text('Example')
-          ),
-          body: Container(
-            padding: EdgeInsets.all(10),
-            alignment: Alignment.center,
-            child: EasyAutocomplete(
-              suggestions: ['Afeganistan', 'Albania', 'Algeria', 'Australia', 'Brazil', 'German', 'Madagascar', 'Mozambique', 'Portugal', 'Zambia'],
-              onChanged: (value) => print(value)
-            )
-          )
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text('Example'),
+        ),
+        body: EasyInfiniteScroll<Color>(
+          hasMoreData: _pageCount <= 3,
+          onFetch: () async => _fetchData(),
+          onRefresh: () async => _refreshData(),
+          widgetBuilder: (data) {
+            return Container(
+              width: double.infinity,
+              height: 50,
+              margin: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                color: data,
+                borderRadius: BorderRadius.circular(5)
+              )
+            );
+          }
         )
       )
     );
@@ -64,16 +108,17 @@ class MyApp extends StatelessWidget {
 ## API
 | Attribute | Type | Required | Description | Default value |
 |:---|:---|:---:|:---|:---|
-| suggestions | `List<String>` | :heavy_check_mark: | The list of suggestions to be displayed |  |
-| controller | `TextEditingController` | :x: | Text editing controller |  |
-| decoration | `InputDecoration` | :x: | Can be used to decorate the input | InputDecoration() |
-| onChanged | `Function(String)` | :x: | Function that handles the changes to the input |  |
-| inputFormatter | `List<TextInputFormatter>` | :x: | Can be used to set custom inputFormatters to field |  |
-| initialValue | `String` | :x: | Can be used to set the textfield initial value |  |
-| textCapitalization | `TextCapitalization` | :x: | Can be used to set the text capitalization type | TextCapitalization.sentences |
-| autofocus | `bool` | :x: | Determines if should gain focus on screen open | false |
+| onFetch | `Future<List<T>> Function()` | :heavy_check_mark: | A Future method that returns a List with the selected data type on fetch |  |
+| onRefresh | `Future<List<T>> Function()` | :heavy_check_mark: | A Future method that returns a List with the selected data type on refresh |  |
+| hasMoreData | `bool` | :heavy_check_mark: | A bool to determine if the lists has more data to be loaded |  |
+| widgetBuilder | `Widget Function(dynamic data)` | :heavy_check_mark: | A function that that receives values for the current data index and returns a widget that can be filled using the param data |  |
+| loaderBuilder | `Widget? Function()?` | :x: | A function that can be used to create a widget to display a custom loader |  |
+| noMoreItemsBuilder | `Widget? Function()?` | :x: | A function that can be used to create a widget to display a custom `No more items` widget |  |
+| noItemsBuilder | `Widget? Function()?` | :x: | A function that can be used to create a widget to display a custom `No items` widget |  |
+| noMoreItemsText | `String` | :x: | A `String` param that can be changed to display a different message when there are no more items to load | No more items |
+| noItemsText | `String` | :x: | A `String` param that can be changed to display a different message when there are no items to load | No items |
 
 ## Issues & Suggestions
-If you encounter any issue you or want to leave a suggestion you can do it by filling an [issue](https://github.com/4inka/flutter_easy_autocomplete/issues).
+If you encounter any issue you or want to leave a suggestion you can do it by filling an [issue](https://github.com/4inka/flutter_easy_infinite_scroll/issues).
 
 ### Thank you for the support!
