@@ -1,4 +1,4 @@
-// Copyright 2021 4inka
+  // Copyright 2021 4inka
 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -36,18 +36,24 @@ class EasyInfiniteScroll<T> extends StatefulWidget {
   final Future<List<T>> Function() onRefresh;
   final bool hasMoreData;
   final Widget Function(dynamic data) widgetBuilder;
-  final Widget? loaderWidget;
-  final Widget? noMoreItemsWidget;
+  final Widget? Function()? loaderBuilder;
+  final Widget? Function()? noMoreItemsBuilder;
+  final Widget? Function()? noItemsBuilder;
+  final String noMoreItemsText;
+  final String noItemsText;
 
-  EasyInfiniteScroll({
+  const EasyInfiniteScroll({
     Key? key,
     required this.hasMoreData,
     required this.onFetch,
     required this.onRefresh,
     required this.widgetBuilder,
-    this.loaderWidget,
-    this.noMoreItemsWidget,
-  }) : super(key: key);// : assert(noMoreItemsText.is);
+    this.loaderBuilder,
+    this.noMoreItemsBuilder,
+    this.noItemsBuilder,
+    this.noMoreItemsText = 'No more items',
+    this.noItemsText = 'No items',
+  }): super(key: key);
 
   @override
   _EasyInfiniteScrollState createState() => _EasyInfiniteScrollState<T>();
@@ -63,71 +69,98 @@ class _EasyInfiniteScrollState<T> extends State<EasyInfiniteScroll> {
     super.initState();
     Future.delayed(Duration.zero, () async => await _onFetch() );
     _scrollController.addListener(() async {
-      if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent && widget.hasMoreData) {
+      if (_scrollController.position.pixels > 0.95 * _scrollController.position.maxScrollExtent && widget.hasMoreData && !_isLoading) {
         await _onFetch();
       }
     });
   }
 
-  Widget? _setLoaderWidget() {
-    if(widget.loaderWidget != null) {
-      return widget.loaderWidget;
+  Widget? _loaderBuilder() {
+    Widget? child = const CircularProgressIndicator();
+
+    if(widget.loaderBuilder != null) {
+      child = widget.loaderBuilder!();
     }
     else if (Platform.isIOS) {
-      return CupertinoActivityIndicator();
+      child = const CupertinoActivityIndicator();
     }
-    else {
-      return CircularProgressIndicator();
-    }
-  }
 
-  Widget? _buildLoaderWidget() {
     return Container(
       alignment: Alignment.center,
-      padding: EdgeInsets.symmetric(vertical: 10),
-      child: _setLoaderWidget()
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: child
     );
   }
 
-  Widget? _buildNoMoreItemsWidget() {
-    if(widget.loaderWidget != null) {
-      return widget.loaderWidget;
+  Widget? _noMoreItemsBuilder() {
+    Widget? child = Text(
+      widget.noMoreItemsText,
+      style: const TextStyle(
+        color: Colors.grey,
+        fontSize: 16,
+        fontWeight: FontWeight.bold
+      )
+    );
+
+    if(widget.noMoreItemsBuilder != null) {
+      child = widget.noMoreItemsBuilder!();
     }
 
     return Container(
       alignment: Alignment.center,
-      padding: EdgeInsets.symmetric(vertical: 5),
-      child: Text(
-        'No more items',
-        style: TextStyle(
-          color: Colors.grey,
-          fontSize: 16,
-          fontWeight: FontWeight.bold
-        )
+      padding: const EdgeInsets.only(top: 5, bottom: 10),
+      child: child
+    );
+  }
+
+  Widget? _noItemsBuilder(BoxConstraints constraints) {
+    Widget? child = Text(
+      widget.noItemsText,
+      style: const TextStyle(
+        color: Colors.grey,
+        fontSize: 16,
+        fontWeight: FontWeight.bold
       )
+    );
+
+    if (widget.noItemsBuilder != null) {
+      child = widget.noItemsBuilder!();
+    }
+
+    return Container(
+      width: constraints.maxWidth,
+      height: constraints.maxHeight,
+      alignment: Alignment.center,
+      child: child
     );
   }
 
   Future<void> _onFetch({ bool isRefresh = false }) async {
-    if (!widget.hasMoreData) return;
-    else if (isRefresh) {print('Is refrweshin');
-      _isLoading = true;
+    if (!widget.hasMoreData && !isRefresh) {
+      return;
+    }
+    else if (isRefresh) {
+      setState(() => _isLoading = true );
       await widget.onRefresh().then((value) {
-        _items.clear();
-        _items.addAll(value as List<T>);
-        _isLoading = false;
+        setState(() {
+          _items.clear();
+          _items.addAll(value as List<T>);
+          _isLoading = false;
+        });
       }).catchError((error) {
-        _isLoading = false;
+        setState(() => _isLoading = false );
         throw(error);
       });
     }
     else {
-      _isLoading = true;
+      setState(() => _isLoading = true );
       await widget.onFetch().then((value) {
-        _items.addAll(value as List<T>);
-        _isLoading = false;
+        setState(() {
+          _items.addAll(value as List<T>);
+          _isLoading = false;
+        });
       }).catchError((error) {
-        _isLoading = false;
+        setState(() => _isLoading = false );
         throw(error);
       });
     }
@@ -141,12 +174,12 @@ class _EasyInfiniteScrollState<T> extends State<EasyInfiniteScroll> {
           primary: false,
           shrinkWrap: true,
           controller: _scrollController,
-          physics: BouncingScrollPhysics(),
+          physics: const BouncingScrollPhysics(),
           slivers: [
             CupertinoSliverRefreshControl(
               onRefresh: () => _onFetch(isRefresh: true),
               builder: (context, refreshState, pulledExtent, refreshTriggerPullDistance, refreshIndicatorExtent) {
-                return _buildLoaderWidget()!;
+                return _loaderBuilder()!;
               }
             ),
             SliverToBoxAdapter(
@@ -159,18 +192,13 @@ class _EasyInfiniteScrollState<T> extends State<EasyInfiniteScroll> {
                     return widget.widgetBuilder(_items[i]);
                   }
                   else if(_isLoading || widget.hasMoreData) {
-                    return _buildLoaderWidget()!;
+                    return _loaderBuilder()!;
                   }
                   else if (_items.isEmpty && !widget.hasMoreData) {
-                    return Container(
-                      width: constraints.maxWidth,
-                      height: constraints.maxHeight,
-                      alignment: Alignment.center,
-                      child: Text('Empty list')
-                    );
+                    return _noItemsBuilder(constraints)!;
                   }
 
-                  return _buildNoMoreItemsWidget()!;
+                  return _noMoreItemsBuilder()!;
                 }
               )
             )
@@ -180,6 +208,7 @@ class _EasyInfiniteScrollState<T> extends State<EasyInfiniteScroll> {
     );
   }
 
+  @override
   dispose() {
     _scrollController.dispose();
     super.dispose();
